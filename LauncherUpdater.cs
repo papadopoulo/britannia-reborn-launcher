@@ -6,6 +6,7 @@ using System.Net.Http;
 using System.Net.Http.Headers;
 using System.Reflection;
 using System.Text.Json;
+using System.Text.Json.Serialization;
 using System.Threading;
 using System.Threading.Tasks;
 
@@ -47,19 +48,36 @@ public static class LauncherUpdater
             http.DefaultRequestHeaders.Accept.Add(new MediaTypeWithQualityHeaderValue("application/vnd.github+json"));
 
             var json = await http.GetStringAsync(GitHubApi, ct);
-            var release = JsonSerializer.Deserialize<GitHubRelease>(json,
-                new JsonSerializerOptions { PropertyNameCaseInsensitive = true });
-            if (release == null) return null;
+            var release = JsonSerializer.Deserialize<GitHubRelease>(json);
+            if (release == null)
+            {
+                App.Log("UpdateCheck: deserialize release devolvió null");
+                return null;
+            }
 
             var remote = ParseVersion(release.TagName);
             var local = Assembly.GetExecutingAssembly().GetName().Version;
-            if (remote == null || local == null) return null;
-            if (remote.CompareTo(local) <= 0) return null;
+            App.Log($"UpdateCheck: remote={release.TagName} (parsed={remote}) vs local={local}");
 
-            // Asset .zip del release (lo genera el GitHub Action)
+            if (remote == null || local == null)
+            {
+                App.Log("UpdateCheck: versión remote o local es null");
+                return null;
+            }
+            if (remote.CompareTo(local) <= 0)
+            {
+                App.Log("UpdateCheck: ya estás en la última versión");
+                return null;
+            }
+
             var asset = release.Assets?.FirstOrDefault(a => a.Name.EndsWith(".zip", StringComparison.OrdinalIgnoreCase));
-            if (asset == null) return null;
+            if (asset == null)
+            {
+                App.Log($"UpdateCheck: no encontré asset .zip (assets count={release.Assets?.Length ?? 0})");
+                return null;
+            }
 
+            App.Log($"UpdateCheck: hay update v{remote}, asset {asset.Name}");
             return new UpdateInfo
             {
                 RemoteVersion = remote,
@@ -179,18 +197,33 @@ public sealed class DownloadProgress
     public int Percent => BytesTotal > 0 ? (int)(BytesDownloaded * 100 / BytesTotal) : 0;
 }
 
-// DTOs de la GitHub API (subconjunto que necesitamos).
+// DTOs de la GitHub API. La API devuelve snake_case (tag_name, html_url,
+// browser_download_url) y System.Text.Json sin atributos NO convierte de
+// snake_case a PascalCase aunque pongas PropertyNameCaseInsensitive=true.
+// Por eso necesitamos [JsonPropertyName] explícito en cada propiedad.
 internal sealed class GitHubRelease
 {
+    [JsonPropertyName("tag_name")]
     public string? TagName { get; set; }
+
+    [JsonPropertyName("name")]
     public string? Name { get; set; }
+
+    [JsonPropertyName("html_url")]
     public string? HtmlUrl { get; set; }
+
+    [JsonPropertyName("assets")]
     public GitHubAsset[]? Assets { get; set; }
 }
 
 internal sealed class GitHubAsset
 {
+    [JsonPropertyName("name")]
     public string Name { get; set; } = "";
+
+    [JsonPropertyName("browser_download_url")]
     public string BrowserDownloadUrl { get; set; } = "";
+
+    [JsonPropertyName("size")]
     public long Size { get; set; }
 }
