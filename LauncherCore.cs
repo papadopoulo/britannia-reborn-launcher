@@ -50,6 +50,21 @@ internal static class LauncherCore
             return (false, $"cuo.exe no existe en {cuoExe}", null);
         }
 
+        // Bug observado: ClassicUO con -skiploginscreen intenta auto-loguear con
+        // el personaje de la cuenta anterior (lastcharacter.json) aunque pasemos
+        // -username distinto. Resultado: cliente colgado en "Verifying account".
+        //
+        // Solución: si el username cambió, borrar lastcharacter.json para que
+        // CUO no intente entrar a un personaje que no existe en la cuenta nueva.
+        try
+        {
+            LimpiarCacheClienteSiCambioCuenta(cuoExe, username);
+        }
+        catch (Exception ex)
+        {
+            BritanniaReborn.App.Log($"No pude limpiar caché del cliente: {ex.Message}");
+        }
+
         // -skiploginscreen SIEMPRE: las credenciales ya las metió el player
         // en NUESTRA pantalla login WPF, así que ClassicUO no debe mostrar la
         // suya. El arg -fastlogin que tenía antes NO existe en ClassicUO 1.1
@@ -96,6 +111,64 @@ internal static class LauncherCore
         catch (Exception ex)
         {
             return (false, $"Excepción al lanzar: {ex.Message}", null);
+        }
+    }
+
+    /// <summary>
+    /// Si el username actual es distinto del último que jugó, borra los archivos
+    /// que ClassicUO usa para recordar el último personaje (lastcharacter.json,
+    /// globalprofile.json) y limpia las credenciales del settings.json. Sin
+    /// esto, CUO con -skiploginscreen intenta auto-conectar al personaje de la
+    /// cuenta anterior y queda colgado en "Verifying account".
+    /// </summary>
+    private static void LimpiarCacheClienteSiCambioCuenta(string cuoExePath, string newUsername)
+    {
+        var saved = LauncherSettings.Load();
+        var oldUsername = saved.LastUsername;
+
+        if (string.Equals(oldUsername, newUsername, StringComparison.OrdinalIgnoreCase))
+        {
+            return; // misma cuenta, conserva el último personaje
+        }
+
+        var cuoDir = Path.GetDirectoryName(cuoExePath)!;
+
+        // Archivos de "último personaje" que CUO consulta para auto-loguear
+        var rutasABorrar = new[]
+        {
+            Path.Combine(cuoDir, "Data", "Profiles", "lastcharacter.json"),
+            Path.Combine(cuoDir, "Data", "Profiles", "globalprofile.json"),
+        };
+        foreach (var ruta in rutasABorrar)
+        {
+            try
+            {
+                if (File.Exists(ruta))
+                {
+                    File.Delete(ruta);
+                    BritanniaReborn.App.Log($"Borrado: {ruta} (cambio de cuenta {oldUsername} → {newUsername})");
+                }
+            }
+            catch (Exception ex)
+            {
+                BritanniaReborn.App.Log($"No pude borrar {ruta}: {ex.Message}");
+            }
+        }
+
+        // Limpiar credenciales y last character del settings.json (si existe).
+        // CUO lo recrea con los args -username -password al arrancar.
+        var settingsFile = Path.Combine(cuoDir, "settings.json");
+        try
+        {
+            if (File.Exists(settingsFile))
+            {
+                File.Delete(settingsFile);
+                BritanniaReborn.App.Log($"Borrado: {settingsFile} (cambio de cuenta)");
+            }
+        }
+        catch (Exception ex)
+        {
+            BritanniaReborn.App.Log($"No pude borrar settings.json: {ex.Message}");
         }
     }
 
