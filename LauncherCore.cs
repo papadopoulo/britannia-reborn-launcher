@@ -50,34 +50,6 @@ internal static class LauncherCore
             return (false, $"cuo.exe no existe en {cuoExe}", null);
         }
 
-        // Mata cualquier cuo.exe huérfano. Bug observado: tras logout +
-        // login con cuenta distinta, el server quedaba con la sesión vieja
-        // "viva" y la nueva conexión se quedaba en "Verifying account...".
-        // Cerrando el cuo previo aseguramos que no haya conflictos.
-        try
-        {
-            foreach (var p in Process.GetProcessesByName("cuo"))
-            {
-                try
-                {
-                    p.Kill(true);
-                    p.WaitForExit(2000);
-                }
-                catch (Exception ex)
-                {
-                    BritanniaReborn.App.Log($"No pude matar cuo.exe huérfano (PID {p.Id}): {ex.Message}");
-                }
-                finally
-                {
-                    p.Dispose();
-                }
-            }
-        }
-        catch (Exception ex)
-        {
-            BritanniaReborn.App.Log($"Error buscando cuo.exe huérfanos: {ex.Message}");
-        }
-
         // -skiploginscreen SIEMPRE: las credenciales ya las metió el player
         // en NUESTRA pantalla login WPF, así que ClassicUO no debe mostrar la
         // suya. El arg -fastlogin que tenía antes NO existe en ClassicUO 1.1
