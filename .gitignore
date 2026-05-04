@@ -1,0 +1,31 @@
+# Build outputs
+bin/
+obj/
+*.pdb
+
+# Distribution (zip + carpeta dist/ que genera el workflow al hacer release)
+dist/
+
+# Datos UO oficiales que se copian al primer arranque (~5 GB, generado por
+# el patcher al ejecutar el launcher por primera vez)
+uodata/
+
+# cuo/ se incluye en el repo (binarios de ClassicUO embebidos para empaquetar
+# en el zip de distribución), pero excluimos los datos personales que se
+# generan al jugar — perfiles, journals, settings con contraseña.
+cuo/settings.json
+cuo/Data/Profiles/
+cuo/Data/Client/JournalLogs/
+
+# IDE
+.vs/
+.vscode/
+.idea/
+
+# Logs y temp
+*.log
+*.tmp
+
+# OS
+Thumbs.db
+.DS_Store

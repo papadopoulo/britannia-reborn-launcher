@@ -1,0 +1,159 @@
+using System.Reflection;
+using System.Windows;
+using System.Windows.Media;
+
+namespace BritanniaReborn;
+
+public partial class MainWindow : Window
+{
+    private readonly string _uoPath;
+    private readonly ServerStatusChecker _statusChecker;
+
+    public MainWindow(string uoPath)
+    {
+        InitializeComponent();
+        _uoPath = uoPath;
+
+        MouseLeftButtonDown += (_, _) => { try { DragMove(); } catch { } };
+
+        var version = Assembly.GetExecutingAssembly().GetName().Version?.ToString(3) ?? "1.0.0";
+        LblLauncherVersion.Text = $"Britannia Reborn Launcher v{version}";
+
+        // Cargar settings persistidos
+        var settings = LauncherSettings.Load();
+        TxtUsername.Text = settings.LastUsername;
+        if (settings.SavePassword && !string.IsNullOrEmpty(settings.SavedPassword))
+        {
+            TxtPassword.Password = settings.SavedPassword;
+            ChkSavePassword.IsChecked = true;
+        }
+
+        // Status del servidor (polling TCP cada 3s al puerto del shard)
+        _statusChecker = new ServerStatusChecker(
+            Config.ServerHost, Config.ServerPort,
+            Config.StatusCheckIntervalMs, Config.StatusCheckTimeoutMs);
+        _statusChecker.StatusChanged += online => Dispatcher.Invoke(() => UpdateStatus(online));
+        _statusChecker.Start();
+        Closed += (_, _) => _statusChecker.Dispose();
+
+        // News y eventos (carga única al abrir)
+        Loaded += async (_, _) =>
+        {
+            await CargarNoticiasAsync();
+            await CargarEventosAsync();
+        };
+    }
+
+    private void UpdateStatus(bool online)
+    {
+        if (online)
+        {
+            DotStatus.Fill = new SolidColorBrush(Color.FromRgb(0x4C, 0xD9, 0x64));
+            LblStatus.Text = "Servidor online — listo para entrar";
+            LblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xCC, 0xFF, 0xCC));
+        }
+        else
+        {
+            DotStatus.Fill = new SolidColorBrush(Color.FromRgb(0xE0, 0x4A, 0x4A));
+            LblStatus.Text = "Servidor offline — esperando que vuelva...";
+            LblStatus.Foreground = new SolidColorBrush(Color.FromRgb(0xFF, 0xCC, 0xCC));
+        }
+    }
+
+    private async System.Threading.Tasks.Task CargarNoticiasAsync()
+    {
+        var items = await NewsClient.CargarAsync();
+        if (items.Count == 0)
+        {
+            LblNoticiasVacio.Visibility = Visibility.Visible;
+            return;
+        }
+        LstNoticias.ItemsSource = items;
+    }
+
+    private async System.Threading.Tasks.Task CargarEventosAsync()
+    {
+        var items = await EventosClient.CargarAsync();
+        if (items.Count == 0)
+        {
+            LblEventosVacio.Visibility = Visibility.Visible;
+            return;
+        }
+        LstEventos.ItemsSource = items;
+    }
+
+    private void BtnPlay_Click(object sender, RoutedEventArgs e) => Launch();
+    private void BtnQuit_Click(object sender, RoutedEventArgs e) => Close();
+
+    private void Launch()
+    {
+        var user = TxtUsername.Text.Trim();
+        var pass = TxtPassword.Password;
+
+        if (string.IsNullOrEmpty(user))
+        {
+            LblError.Text = "Introduce un Account Name.";
+            return;
+        }
+
+        if (!LauncherCore.ExisteClassicUo())
+        {
+            LblError.Text = "ClassicUO no se encuentra (carpeta cuo/ falta). Reinstala el launcher.";
+            return;
+        }
+
+        // Persistir settings antes de lanzar
+        var settings = LauncherSettings.Load();
+        settings.LastUsername = user;
+        settings.SavePassword = ChkSavePassword.IsChecked == true;
+        settings.SavedPassword = settings.SavePassword ? pass : "";
+        settings.UoPath = _uoPath;
+        LauncherSettings.Save(settings);
+
+        var (ok, errorOut, proc) = LauncherCore.LanzarJuego(user, pass, _uoPath);
+        if (!ok)
+        {
+            // Mostrar error completo en MessageBox (con scroll para textos largos)
+            LblError.Text = "Falló al lanzar — ver detalle en mensaje.";
+            MessageBox.Show(this,
+                $"No se pudo lanzar ClassicUO.\n\n{errorOut}\n\nLog completo: %APPDATA%\\BritanniaReborn\\launcher.log",
+                "Britannia Reborn — Error al lanzar",
+                MessageBoxButton.OK, MessageBoxImage.Error);
+            return;
+        }
+
+        // Ocultar el login mientras juega. Cuando ClassicUO termine, abrimos el
+        // banner (PatcherWindow modo post-game) — al darle JUGAR vuelve al login.
+        Hide();
+        if (proc != null)
+        {
+            try
+            {
+                proc.EnableRaisingEvents = true;
+                proc.Exited += (_, _) => Dispatcher.Invoke(VolverAlBanner);
+            }
+            catch
+            {
+                // Si no podemos suscribirnos (proceso ya terminado, raro), volver ya.
+                VolverAlBanner();
+            }
+        }
+        else
+        {
+            VolverAlBanner();
+        }
+    }
+
+    private void VolverAlBanner()
+    {
+        // Transición segura: durante el cambio de MainWindow, ShutdownMode=OnExplicitShutdown
+        // para que cerrar este login no tumbe la app.
+        Application.Current.ShutdownMode = ShutdownMode.OnExplicitShutdown;
+        var banner = new PatcherWindow(_uoPath, postGame: true);
+        Application.Current.MainWindow = banner;
+        banner.Show();
+        banner.Activate();
+        Application.Current.ShutdownMode = ShutdownMode.OnMainWindowClose;
+        Close();
+    }
+}

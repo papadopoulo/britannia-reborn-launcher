@@ -1,0 +1,331 @@
+<Window x:Class="BritanniaReborn.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Britannia Reborn"
+        Width="1100" Height="800"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Icon="pack://application:,,,/Resources/icon.ico">
+
+    <Window.Resources>
+        <!-- Estilo CheckBox dorado custom -->
+        <Style x:Key="GoldCheckBox" TargetType="CheckBox">
+            <Setter Property="Foreground" Value="{StaticResource ColorOro}"/>
+            <Setter Property="FontSize" Value="12"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="VerticalContentAlignment" Value="Center"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="CheckBox">
+                        <StackPanel Orientation="Horizontal">
+                            <Border x:Name="Box" Width="16" Height="16"
+                                    Background="#1A1A24"
+                                    BorderBrush="{StaticResource ColorOro}"
+                                    BorderThickness="1.5"
+                                    CornerRadius="2"
+                                    VerticalAlignment="Center" Margin="0,0,8,0">
+                                <Path x:Name="Check" Data="M3,8 L7,12 L13,4"
+                                      Stroke="{StaticResource ColorOro}"
+                                      StrokeThickness="2"
+                                      Stretch="None"
+                                      Visibility="Collapsed"/>
+                            </Border>
+                            <ContentPresenter VerticalAlignment="Center"/>
+                        </StackPanel>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsChecked" Value="True">
+                                <Setter TargetName="Check" Property="Visibility" Value="Visible"/>
+                            </Trigger>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#2A2A34"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón Quit estilo cartel rojo -->
+        <Style x:Key="QuitButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="QuitBox" Background="#7A1A1A"
+                                BorderBrush="#D4AF37" BorderThickness="2"
+                                CornerRadius="4" Padding="16,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="QuitBox" Property="Background" Value="#9A2A2A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- Botón Play (flecha) estilo dorado -->
+        <Style x:Key="PlayButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource ColorOro}"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="PlayBox" Background="#4A2A6A"
+                                BorderBrush="{StaticResource ColorOro}" BorderThickness="2"
+                                CornerRadius="6" Padding="12,4">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="PlayBox" Property="Background" Value="#6A3A8A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <Border CornerRadius="14" BorderBrush="{StaticResource ColorOro}" BorderThickness="2">
+        <Border.Background>
+            <ImageBrush ImageSource="pack://application:,,,/Resources/login-bg.png" Stretch="UniformToFill"/>
+        </Border.Background>
+
+        <Grid>
+            <!-- Botón Quit (esquina sup. derecha) — estilo cartel rojo -->
+            <Button Name="BtnQuit" Style="{StaticResource QuitButton}"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,20,20,0" Width="80" Height="36"
+                    Content="Quit" Click="BtnQuit_Click"/>
+
+            <!-- Panel login centrado abajo (no tapa el logo).
+                 Decoración: diamantes morados en las 4 esquinas + 2 en lados,
+                 estilo del banner del shard. -->
+            <Grid HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                  Margin="0,0,0,60" Width="540" Height="244">
+
+                <!-- Border principal del panel (mantiene márgenes originales del layout) -->
+                <Border Margin="14,12,14,12"
+                        CornerRadius="3"
+                        Background="#E60A0A0F"
+                        BorderBrush="{StaticResource ColorOro}" BorderThickness="1"/>
+
+                <Grid Margin="44,30,44,30">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="◇  Log in to Ultima Online  ◇"
+                               Foreground="{StaticResource ColorOro}"
+                               FontSize="15" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,0,0,14"/>
+
+                    <Grid Grid.Row="1" Margin="0,0,0,8">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Account Name" Foreground="{StaticResource ColorOro}"
+                                   VerticalAlignment="Center" FontSize="12"/>
+                        <Border Grid.Column="1" Background="#1A1A24" CornerRadius="2"
+                                BorderBrush="{StaticResource ColorOro}" BorderThickness="1">
+                            <TextBox Name="TxtUsername" Background="Transparent"
+                                     Foreground="{StaticResource ColorOro}"
+                                     BorderThickness="0" Padding="8,3"
+                                     CaretBrush="{StaticResource ColorOro}"
+                                     FontSize="12"/>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="2" Margin="0,0,0,12">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="120"/>
+                            <ColumnDefinition Width="*"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBlock Grid.Column="0" Text="Password" Foreground="{StaticResource ColorOro}"
+                                   VerticalAlignment="Center" FontSize="12"/>
+                        <Border Grid.Column="1" Background="#1A1A24" CornerRadius="2"
+                                BorderBrush="{StaticResource ColorOro}" BorderThickness="1">
+                            <PasswordBox Name="TxtPassword" Background="Transparent"
+                                         Foreground="{StaticResource ColorOro}"
+                                         BorderThickness="0" Padding="8,3"
+                                         CaretBrush="{StaticResource ColorOro}"
+                                         FontSize="12"/>
+                        </Border>
+                    </Grid>
+
+                    <Grid Grid.Row="3">
+                        <CheckBox Name="ChkSavePassword"
+                                  Style="{StaticResource GoldCheckBox}"
+                                  Content="Save Password"
+                                  HorizontalAlignment="Left"/>
+                    </Grid>
+
+                    <TextBlock Grid.Row="4"
+                               Name="LblError"
+                               Foreground="#FF6E6E"
+                               FontSize="11" HorizontalAlignment="Center"
+                               VerticalAlignment="Center"
+                               TextWrapping="Wrap" Margin="0,8,0,8"/>
+
+                    <Button Grid.Row="5" Name="BtnPlay" Style="{StaticResource PlayButton}"
+                            HorizontalAlignment="Right" Width="56" Height="36"
+                            Content="▶" Click="BtnPlay_Click"/>
+                </Grid>
+            </Grid>
+
+            <!-- Panel NOTICIAS a la izquierda del login -->
+            <Border HorizontalAlignment="Left" VerticalAlignment="Bottom"
+                    Margin="40,0,0,72" Width="240" Height="244"
+                    CornerRadius="3"
+                    Background="#E60A0A0F"
+                    BorderBrush="{StaticResource ColorOro}" BorderThickness="1">
+                <Grid Margin="14,12,14,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="◇  NOTICIAS  ◇"
+                               Foreground="{StaticResource ColorOro}"
+                               FontSize="13" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Name="LblNoticiasVacio" Visibility="Collapsed"
+                                       Text="(Sin noticias por ahora)"
+                                       Foreground="#888888" FontSize="11"
+                                       FontStyle="Italic" HorizontalAlignment="Center"/>
+                            <ItemsControl Name="LstNoticias">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <StackPanel Margin="0,0,0,12">
+                                            <TextBlock Text="{Binding Fecha}"
+                                                       Foreground="{StaticResource ColorPurpura}"
+                                                       FontSize="10" FontWeight="Bold"/>
+                                            <TextBlock Text="{Binding Titulo}"
+                                                       Foreground="{StaticResource ColorOro}"
+                                                       FontSize="12" FontWeight="Bold"
+                                                       TextWrapping="Wrap"/>
+                                            <TextBlock Text="{Binding Texto}"
+                                                       Foreground="#DDDDDD"
+                                                       FontSize="11" TextWrapping="Wrap"
+                                                       Opacity="0.92" Margin="0,2,0,0"/>
+                                        </StackPanel>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Panel EVENTOS DE HOY a la derecha del login (simétrico a NOTICIAS) -->
+            <Border HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                    Margin="0,0,40,72" Width="240" Height="244"
+                    CornerRadius="3"
+                    Background="#E60A0A0F"
+                    BorderBrush="{StaticResource ColorOro}" BorderThickness="1">
+                <Grid Margin="14,12,14,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="*"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0" Text="◇  EVENTOS DE HOY  ◇"
+                               Foreground="{StaticResource ColorOro}"
+                               FontSize="13" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,0,0,10"/>
+
+                    <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto">
+                        <StackPanel>
+                            <TextBlock Name="LblEventosVacio" Visibility="Collapsed"
+                                       Text="(Sin eventos programados hoy)"
+                                       Foreground="#888888" FontSize="11"
+                                       FontStyle="Italic" HorizontalAlignment="Center"
+                                       TextWrapping="Wrap"/>
+                            <ItemsControl Name="LstEventos">
+                                <ItemsControl.ItemTemplate>
+                                    <DataTemplate>
+                                        <Grid Margin="0,0,0,10">
+                                            <Grid.ColumnDefinitions>
+                                                <ColumnDefinition Width="Auto"/>
+                                                <ColumnDefinition Width="*"/>
+                                            </Grid.ColumnDefinitions>
+                                            <Border Grid.Column="0" Background="#4A2A6A"
+                                                    BorderBrush="{StaticResource ColorOro}" BorderThickness="1"
+                                                    CornerRadius="3" Padding="6,2"
+                                                    VerticalAlignment="Top" Margin="0,0,8,0">
+                                                <TextBlock Text="{Binding Hora}"
+                                                           Foreground="{StaticResource ColorOro}"
+                                                           FontSize="12" FontWeight="Bold"/>
+                                            </Border>
+                                            <StackPanel Grid.Column="1">
+                                                <TextBlock Text="{Binding Titulo}"
+                                                           Foreground="{StaticResource ColorOro}"
+                                                           FontSize="12" FontWeight="Bold"
+                                                           TextWrapping="Wrap"/>
+                                                <TextBlock Text="{Binding Lugar}"
+                                                           Foreground="#DDDDDD"
+                                                           FontSize="10" TextWrapping="Wrap"
+                                                           Opacity="0.85"/>
+                                            </StackPanel>
+                                        </Grid>
+                                    </DataTemplate>
+                                </ItemsControl.ItemTemplate>
+                            </ItemsControl>
+                        </StackPanel>
+                    </ScrollViewer>
+                </Grid>
+            </Border>
+
+            <!-- Status del servidor: badge dorado encima del recuadro login.
+                 Login: bottom 60 + height 244 = top a 304 desde abajo. Ponemos
+                 el badge a 320 de bottom para que respire 16px sobre el login. -->
+            <Border HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,320" Padding="18,8"
+                    CornerRadius="20"
+                    Background="#E60A0A0F"
+                    BorderBrush="{StaticResource ColorOro}" BorderThickness="1.5">
+                <StackPanel Orientation="Horizontal">
+                    <Ellipse Name="DotStatus" Width="14" Height="14"
+                             Fill="#888888" VerticalAlignment="Center" Margin="0,0,12,0"/>
+                    <TextBlock Name="LblStatus" Text="Comprobando estado del servidor..."
+                               Foreground="#FFFFFF" FontSize="14" FontWeight="Bold"
+                               VerticalAlignment="Center">
+                        <TextBlock.Effect>
+                            <DropShadowEffect Color="Black" BlurRadius="4" ShadowDepth="1" Opacity="0.9"/>
+                        </TextBlock.Effect>
+                    </TextBlock>
+                </StackPanel>
+            </Border>
+
+            <!-- Versiones abajo de todo -->
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Bottom" Margin="0,0,0,18">
+                <TextBlock Text="UO Version 7.0.114.40" Foreground="#AAAAAA"
+                           FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+                <TextBlock Name="LblLauncherVersion"
+                           Foreground="#AAAAAA"
+                           FontSize="10" HorizontalAlignment="Center" Opacity="0.7"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>

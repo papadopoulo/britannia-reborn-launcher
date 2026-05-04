@@ -1,0 +1,118 @@
+# GitHub Actions workflow para construir y publicar el launcher.
+#
+# Trigger: push de tag con formato `v*` (ej. v1.0.0, v1.2.3-beta).
+#
+# Pasos:
+#   1. Setup .NET 10
+#   2. dotnet publish → genera BritanniaReborn.exe self-contained
+#   3. Empaqueta publish/ + cuo/ en un zip limpio
+#   4. Crea Release en GitHub con el zip adjunto
+#
+# Uso (cuando quieras publicar nueva versión del launcher):
+#   git tag v1.0.1
+#   git push --tags
+#
+# La web (britannia-reborn.com) enlaza a:
+#   https://github.com/papadopoulo/britannia-reborn-launcher/releases/latest/download/BritanniaReborn-launcher.zip
+# Esa URL devuelve siempre el zip de la última release.
+
+name: Release Launcher
+
+on:
+  push:
+    tags:
+      - "v*"
+  # Permite ejecutarlo manualmente desde la pestaña Actions de GitHub
+  workflow_dispatch:
+    inputs:
+      version:
+        description: "Versión a publicar (ej. v1.0.0). Si está vacío, se usa el SHA del commit."
+        required: false
+        type: string
+
+permissions:
+  contents: write  # necesario para crear releases
+
+jobs:
+  build-and-release:
+    runs-on: windows-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup .NET 10
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "10.0.x"
+
+      - name: Restore dependencies
+        run: dotnet restore
+
+      - name: Publish (single-file, self-contained, win-x64)
+        run: dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
+
+      - name: Inject cuo/ into publish output
+        shell: pwsh
+        run: |
+          # Copia ClassicUO embebido al lado del .exe
+          Copy-Item -Path "./cuo" -Destination "./publish/cuo" -Recurse -Force
+          # Limpia archivos personales por si quedaron en cuo/ accidentalmente
+          Remove-Item -Path "./publish/cuo/settings.json" -ErrorAction SilentlyContinue
+          Remove-Item -Path "./publish/cuo/Data/Profiles" -Recurse -ErrorAction SilentlyContinue
+          Remove-Item -Path "./publish/cuo/Data/Client/JournalLogs" -Recurse -ErrorAction SilentlyContinue
+          Get-ChildItem -Path "./publish/cuo" -Filter "*.pdb" -Recurse | Remove-Item -Force
+
+      - name: Stage final dist
+        shell: pwsh
+        run: |
+          # Estructura del zip: BritanniaReborn/<exe + cuo/>
+          New-Item -Path "./dist/BritanniaReborn" -ItemType Directory -Force | Out-Null
+          Copy-Item -Path "./publish/BritanniaReborn.exe" -Destination "./dist/BritanniaReborn/BritanniaReborn.exe"
+          Copy-Item -Path "./publish/cuo" -Destination "./dist/BritanniaReborn/cuo" -Recurse
+
+      - name: Create zip
+        shell: pwsh
+        run: |
+          Compress-Archive -Path "./dist/BritanniaReborn" -DestinationPath "./BritanniaReborn-launcher.zip" -CompressionLevel Optimal
+          $size = (Get-Item "./BritanniaReborn-launcher.zip").Length / 1MB
+          Write-Host "Zip size: $([math]::Round($size, 1)) MB"
+
+      - name: Determine version
+        id: version
+        shell: pwsh
+        run: |
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^v') {
+            $version = $tag
+          } else {
+            # workflow_dispatch sin tag — usar input o fallback al SHA
+            $version = if ("${{ inputs.version }}") { "${{ inputs.version }}" } else { "v0.0.0-${{ github.sha }}".Substring(0, 14) }
+          }
+          "version=$version" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "Release version: $version"
+
+      - name: Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: ${{ steps.version.outputs.version }}
+          name: "Britannia Reborn Launcher ${{ steps.version.outputs.version }}"
+          body: |
+            ## Britannia Reborn Launcher ${{ steps.version.outputs.version }}
+
+            Launcher oficial del shard. Descarga el `.zip`, extrae donde quieras y ejecuta `BritanniaReborn.exe`.
+
+            **Requisito**: tener Ultima Online Classic instalado (gratis desde [uo.com/client-download](https://www.uo.com/client-download/)).
+
+            Si es la primera vez:
+            1. Descarga `BritanniaReborn-launcher.zip` de los Assets de abajo ↓
+            2. Extrae el zip donde quieras (Escritorio, una carpeta dedicada, etc.)
+            3. Doble click en `BritanniaReborn.exe`
+
+            El primer arranque tarda 2-5 minutos (copia los archivos de UO oficial). Los siguientes son instantáneos.
+
+            ---
+            Build automático generado por GitHub Actions.
+          files: ./BritanniaReborn-launcher.zip
+          fail_on_unmatched_files: true
+          generate_release_notes: false

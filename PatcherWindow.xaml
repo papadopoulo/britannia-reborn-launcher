@@ -1,0 +1,210 @@
+<Window x:Class="BritanniaReborn.PatcherWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Britannia Reborn"
+        Width="1200" Height="480"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent">
+
+    <Window.Resources>
+        <Style x:Key="JugarButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource ColorOro}"/>
+            <Setter Property="FontSize" Value="22"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="#4A2A6A"
+                                BorderBrush="{StaticResource ColorOro}" BorderThickness="3"
+                                CornerRadius="6">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#6A3A8A"/>
+                            </Trigger>
+                            <Trigger Property="IsEnabled" Value="False">
+                                <Setter TargetName="Box" Property="Opacity" Value="0.4"/>
+                                <Setter Property="Cursor" Value="No"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="QuitButton" TargetType="Button">
+            <Setter Property="Foreground" Value="#FFFFFF"/>
+            <Setter Property="FontSize" Value="13"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="#7A1A1A"
+                                BorderBrush="#D4AF37" BorderThickness="2"
+                                CornerRadius="4" Padding="16,8">
+                            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Box" Property="Background" Value="#9A2A2A"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <Style x:Key="LinkButton" TargetType="Button">
+            <Setter Property="Foreground" Value="{StaticResource ColorOro}"/>
+            <Setter Property="FontSize" Value="16"/>
+            <Setter Property="FontWeight" Value="SemiBold"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="HorizontalAlignment" Value="Left"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border x:Name="Box" Background="Transparent" Padding="6,3">
+                            <TextBlock x:Name="Txt" Text="{TemplateBinding Content}"
+                                       Foreground="{TemplateBinding Foreground}"
+                                       FontSize="{TemplateBinding FontSize}"
+                                       FontWeight="{TemplateBinding FontWeight}"
+                                       TextDecorations="Underline">
+                                <TextBlock.Effect>
+                                    <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.85"/>
+                                </TextBlock.Effect>
+                            </TextBlock>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter TargetName="Txt" Property="Foreground" Value="#FFFFFF"/>
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+    </Window.Resources>
+
+    <!-- Ventana al ratio del banner 2.5:1 (1200x480) — la imagen se ve completa -->
+    <Border CornerRadius="14" BorderBrush="{StaticResource ColorOro}" BorderThickness="2">
+        <Border.Background>
+            <ImageBrush ImageSource="pack://application:,,,/Resources/banner.png" Stretch="Fill"/>
+        </Border.Background>
+
+        <Grid>
+            <!-- Botón Quit esquina sup. derecha -->
+            <Button Name="BtnQuit" Style="{StaticResource QuitButton}"
+                    HorizontalAlignment="Right" VerticalAlignment="Top"
+                    Margin="0,16,16,0" Width="76" Height="32"
+                    Content="Quit" Click="BtnQuit_Click"/>
+
+            <!-- Enlaces izquierda (siempre visibles) -->
+            <StackPanel HorizontalAlignment="Left" VerticalAlignment="Top"
+                        Margin="40,240,0,0" Width="240">
+                <TextBlock Text="◆ ENLACES" Foreground="{StaticResource ColorOro}"
+                           FontSize="14" FontWeight="Bold" Opacity="0.95" Margin="6,0,0,8">
+                    <TextBlock.Effect>
+                        <DropShadowEffect Color="Black" BlurRadius="6" ShadowDepth="1" Opacity="0.9"/>
+                    </TextBlock.Effect>
+                </TextBlock>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Web del shard"
+                        Click="LinkWeb_Click" Tag="https://britannia-reborn.com"/>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Discord"
+                        Click="LinkDiscord_Click" Tag="https://discord.gg/Fz7JWuWh3H"/>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Wiki / Reglas"
+                        Click="LinkWiki_Click" Tag="https://britannia-reborn.com/wiki"/>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Reportar bug"
+                        Click="LinkBugs_Click" Tag="https://britannia-reborn.com/bugs"/>
+            </StackPanel>
+
+            <!-- Versión derecha abajo (subido 2 líneas) -->
+            <StackPanel HorizontalAlignment="Right" VerticalAlignment="Bottom"
+                        Margin="0,0,20,40">
+                <TextBlock Text="UO Version 7.0.114.40" Foreground="#DDDDDD"
+                           FontSize="10" HorizontalAlignment="Right" Opacity="0.85"/>
+                <TextBlock Name="LblLauncherVersion"
+                           Foreground="#DDDDDD"
+                           FontSize="10" HorizontalAlignment="Right" Opacity="0.85"/>
+            </StackPanel>
+
+            <!-- Panel inferior centrado: 1/3 del ancho aprox -->
+            <Border HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,20"
+                    Width="420" MinHeight="120"
+                    CornerRadius="8"
+                    Background="#E60A0A0F"
+                    BorderBrush="{StaticResource ColorOro}" BorderThickness="1">
+
+                <!-- VISTA 1: descarga -->
+                <Grid Name="PanelDescarga" Margin="20,12,20,12">
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                        <RowDefinition Height="Auto"/>
+                    </Grid.RowDefinitions>
+
+                    <TextBlock Grid.Row="0"
+                               Text="ACTUALIZANDO MAPA"
+                               Foreground="{StaticResource ColorOro}"
+                               FontSize="14" FontWeight="Bold"
+                               HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                    <TextBlock Grid.Row="1"
+                               Name="LblEstado"
+                               Text="Conectando..."
+                               Foreground="{StaticResource ColorGris}"
+                               FontSize="11" HorizontalAlignment="Center" Margin="0,0,0,2"/>
+
+                    <TextBlock Grid.Row="2"
+                               Name="LblArchivo"
+                               Foreground="{StaticResource ColorPurpura}"
+                               FontSize="10" HorizontalAlignment="Center" Margin="0,0,0,8"/>
+
+                    <Grid Grid.Row="3">
+                        <ProgressBar Name="ProgresoBar" Height="18" Minimum="0" Maximum="100" Value="0"
+                                     Background="#1A1A24" Foreground="{StaticResource ColorOro}"
+                                     BorderBrush="{StaticResource ColorOro}" BorderThickness="1"/>
+                        <TextBlock Name="LblPorcentaje" Text="0%"
+                                   Foreground="#0A0A0F"
+                                   FontWeight="Bold" FontSize="11"
+                                   HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Grid>
+                </Grid>
+            </Border>
+
+            <!-- VISTA 2: listo, botón JUGAR centrado abajo (oculto inicialmente) -->
+            <Button Name="BtnJugar"
+                    Style="{StaticResource JugarButton}"
+                    Width="220" Height="68"
+                    Content="JUGAR"
+                    HorizontalAlignment="Center" VerticalAlignment="Bottom"
+                    Margin="0,0,0,20"
+                    Visibility="Collapsed"
+                    Click="BtnJugar_Click"/>
+
+            <!-- Panel error sobre el panel descarga -->
+            <TextBlock Name="LblError"
+                       Foreground="#FF6E6E"
+                       FontSize="11" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" VerticalAlignment="Top"
+                       Margin="40,60,40,0"/>
+
+            <Button Name="BtnContinuarOffline"
+                    Content="Continuar sin actualizar"
+                    Background="Transparent" Foreground="{StaticResource ColorGris}"
+                    BorderBrush="#444444" BorderThickness="1"
+                    Width="220" Height="32" Cursor="Hand"
+                    HorizontalAlignment="Center" VerticalAlignment="Top"
+                    Margin="0,90,0,0"
+                    Visibility="Collapsed"
+                    Click="BtnContinuarOffline_Click"/>
+        </Grid>
+    </Border>
+</Window>
