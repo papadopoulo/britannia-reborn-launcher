@@ -49,8 +49,25 @@ jobs:
       - name: Restore dependencies
         run: dotnet restore
 
+      - name: Compute version from tag
+        id: ver
+        shell: pwsh
+        run: |
+          # ${{ github.ref_name }} es "v1.0.1"; quitar el "v" para que sea un
+          # AssemblyVersion válido (1.0.1). Si workflow_dispatch sin tag, usa 1.0.0.
+          $tag = "${{ github.ref_name }}"
+          if ($tag -match '^v(\d+\.\d+\.\d+.*)$') {
+            $assemblyVersion = $Matches[1] -replace '[-+].*$',''
+          } else {
+            $assemblyVersion = "1.0.0"
+          }
+          "assembly=$assemblyVersion" | Out-File -FilePath $env:GITHUB_OUTPUT -Append
+          Write-Host "AssemblyVersion: $assemblyVersion"
+
       - name: Publish (single-file, self-contained, win-x64)
-        run: dotnet publish -c Release -r win-x64 --self-contained true -o ./publish
+        # /p:Version sobrescribe el <Version> del csproj, así el footer del
+        # launcher muestra la versión real del release (sincronizada con el tag).
+        run: dotnet publish -c Release -r win-x64 --self-contained true -o ./publish /p:Version=${{ steps.ver.outputs.assembly }}
 
       - name: Inject cuo/ into publish output
         shell: pwsh
