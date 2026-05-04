@@ -114,7 +114,13 @@ public partial class PatcherWindow : Window
     private void BtnQuit_Click(object sender, RoutedEventArgs e)
     {
         Exitoso = false;
-        DialogResult = false;
+        // DialogResult solo se puede asignar si la ventana se abrió con
+        // ShowDialog() — modo patcher inicial. En modo post-game se abrió
+        // con Show() y asignar DialogResult lanza InvalidOperationException.
+        if (!_postGame)
+        {
+            try { DialogResult = false; } catch { }
+        }
         Close();
         Application.Current.Shutdown();
     }
