@@ -38,30 +38,39 @@ public partial class App : Application
         {
             Log("Launcher arrancado");
 
-            // Comprobación de actualización del launcher (solo si tarda <8s, no
-            // bloqueamos el arranque). Si hay nueva versión muestra UpdateWindow.
+            // Comprobación de actualización del launcher.
+            // Hacemos un Task.Run + Wait con timeout pequeño (5s) para evitar
+            // bloquear indefinidamente el dispatcher si GitHub está caído. Si
+            // tarda más, seguimos con el arranque y omitimos el check.
+            UpdateInfo? updateInfo = null;
             try
             {
-                var updateInfo = LauncherUpdater.CheckForUpdatesAsync().GetAwaiter().GetResult();
-                if (updateInfo != null)
+                var task = System.Threading.Tasks.Task.Run(
+                    async () => await LauncherUpdater.CheckForUpdatesAsync()
+                );
+                if (task.Wait(TimeSpan.FromSeconds(5)))
                 {
-                    Log($"Update disponible: v{updateInfo.RemoteVersion}");
-                    var updateWin = new UpdateWindow(updateInfo);
-                    updateWin.ShowDialog();
-                    // Si el player aceptó actualizar, ApplyUpdateAndRestart ya
-                    // llamó a Application.Shutdown() — esta función no continúa.
-                    if (updateWin.ActualizacionEnCurso)
-                    {
-                        return;
-                    }
-                    // Si "Más tarde" → seguimos con el flow normal.
+                    updateInfo = task.Result;
+                }
+                else
+                {
+                    Log("UpdateCheck: timeout 5s — saltando");
                 }
             }
             catch (Exception updEx)
             {
-                // Cualquier fallo (sin internet, GitHub down, etc.) lo logueamos
-                // y seguimos con el launcher como si no hubiera update.
                 LogException("UpdateCheck", updEx);
+            }
+
+            if (updateInfo != null)
+            {
+                Log($"Update disponible: v{updateInfo.RemoteVersion}");
+                var updateWin = new UpdateWindow(updateInfo);
+                updateWin.ShowDialog();
+                if (updateWin.ActualizacionEnCurso)
+                {
+                    return;
+                }
             }
 
             // Verificar UO al arranque. Si no existe, mostrar wizard antes del login.
