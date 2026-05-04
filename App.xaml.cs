@@ -38,6 +38,32 @@ public partial class App : Application
         {
             Log("Launcher arrancado");
 
+            // Comprobación de actualización del launcher (solo si tarda <8s, no
+            // bloqueamos el arranque). Si hay nueva versión muestra UpdateWindow.
+            try
+            {
+                var updateInfo = LauncherUpdater.CheckForUpdatesAsync().GetAwaiter().GetResult();
+                if (updateInfo != null)
+                {
+                    Log($"Update disponible: v{updateInfo.RemoteVersion}");
+                    var updateWin = new UpdateWindow(updateInfo);
+                    updateWin.ShowDialog();
+                    // Si el player aceptó actualizar, ApplyUpdateAndRestart ya
+                    // llamó a Application.Shutdown() — esta función no continúa.
+                    if (updateWin.ActualizacionEnCurso)
+                    {
+                        return;
+                    }
+                    // Si "Más tarde" → seguimos con el flow normal.
+                }
+            }
+            catch (Exception updEx)
+            {
+                // Cualquier fallo (sin internet, GitHub down, etc.) lo logueamos
+                // y seguimos con el launcher como si no hubiera update.
+                LogException("UpdateCheck", updEx);
+            }
+
             // Verificar UO al arranque. Si no existe, mostrar wizard antes del login.
             var uoPath = LauncherCore.DetectarUoPath();
             var uoConfigPath = LauncherSettings.LoadUoPath();

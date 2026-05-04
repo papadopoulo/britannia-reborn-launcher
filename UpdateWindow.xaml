@@ -1,0 +1,76 @@
+<Window x:Class="BritanniaReborn.UpdateWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Britannia Reborn — Actualización"
+        Width="540" Height="340"
+        WindowStartupLocation="CenterScreen"
+        ResizeMode="NoResize"
+        WindowStyle="None"
+        AllowsTransparency="True"
+        Background="Transparent"
+        Icon="pack://application:,,,/Resources/icon.ico">
+
+    <Border CornerRadius="14" BorderBrush="{StaticResource ColorOro}" BorderThickness="2"
+            Background="#0A0A0F">
+        <Border.Effect>
+            <DropShadowEffect Color="Black" BlurRadius="20" ShadowDepth="6" Opacity="0.6"/>
+        </Border.Effect>
+
+        <Grid Margin="32">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="Auto"/>
+            </Grid.RowDefinitions>
+
+            <TextBlock Grid.Row="0" Text="◆  ACTUALIZACIÓN DISPONIBLE  ◆"
+                       Foreground="{StaticResource ColorOro}"
+                       FontSize="14" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,0,0,16"/>
+
+            <TextBlock Grid.Row="1" Name="LblTitulo"
+                       Text="Britannia Reborn vX.Y.Z"
+                       Foreground="{StaticResource ColorOro}"
+                       FontSize="24" FontWeight="Bold"
+                       HorizontalAlignment="Center" Margin="0,0,0,12"/>
+
+            <TextBlock Grid.Row="2" Name="LblMensaje"
+                       Foreground="#DDDDDD"
+                       FontSize="13" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" TextAlignment="Center"
+                       Margin="20,0,20,16"/>
+
+            <Grid Grid.Row="3" Name="PanelProgreso" Visibility="Collapsed">
+                <ProgressBar Name="BarraProgreso" Height="22" Minimum="0" Maximum="100" Value="0"
+                             Background="#1A1A24" Foreground="{StaticResource ColorOro}"
+                             BorderBrush="{StaticResource ColorOro}" BorderThickness="1"/>
+                <TextBlock Name="LblProgreso" Text="0%"
+                           Foreground="#0A0A0F"
+                           FontWeight="Bold" FontSize="12"
+                           HorizontalAlignment="Center" VerticalAlignment="Center"/>
+            </Grid>
+
+            <TextBlock Grid.Row="4" Name="LblError"
+                       Foreground="#FF6E6E"
+                       FontSize="11" TextWrapping="Wrap"
+                       HorizontalAlignment="Center" Margin="0,8,0,0"/>
+
+            <StackPanel Grid.Row="5" Orientation="Horizontal" HorizontalAlignment="Center"
+                        Margin="0,16,0,0" Name="PanelBotones">
+                <Button Name="BtnActualizar" Content="ACTUALIZAR AHORA" Width="190" Height="40"
+                        Margin="0,0,8,0" Click="BtnActualizar_Click"
+                        Background="#4A2A6A" Foreground="{StaticResource ColorOro}"
+                        BorderBrush="{StaticResource ColorOro}" BorderThickness="2"
+                        FontSize="12" FontWeight="Bold" Cursor="Hand"/>
+                <Button Name="BtnDespues" Content="MÁS TARDE" Width="120" Height="40"
+                        Click="BtnDespues_Click"
+                        Background="Transparent" Foreground="#CCCCCC"
+                        BorderBrush="#666666" BorderThickness="1"
+                        FontSize="12" FontWeight="Bold" Cursor="Hand"/>
+            </StackPanel>
+        </Grid>
+    </Border>
+</Window>
