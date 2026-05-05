@@ -117,10 +117,10 @@
                         Click="LinkWeb_Click" Tag="https://britannia-reborn.com"/>
                 <Button Style="{StaticResource LinkButton}" Content="◇  Discord"
                         Click="LinkDiscord_Click" Tag="https://discord.gg/Fz7JWuWh3H"/>
-                <Button Style="{StaticResource LinkButton}" Content="◇  Wiki / Reglas"
-                        Click="LinkWiki_Click" Tag="https://britannia-reborn.com/wiki"/>
-                <Button Style="{StaticResource LinkButton}" Content="◇  Reportar bug"
-                        Click="LinkBugs_Click" Tag="https://britannia-reborn.com/bugs"/>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Reglas"
+                        Click="LinkWiki_Click" Tag="https://britannia-reborn.com/reglas/"/>
+                <Button Style="{StaticResource LinkButton}" Content="◇  Soporte"
+                        Click="LinkBugs_Click" Tag="https://britannia-reborn.com/soporte/"/>
             </StackPanel>
 
             <!-- Versión derecha abajo (subido 2 líneas) -->
