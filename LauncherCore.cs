@@ -115,11 +115,17 @@ internal static class LauncherCore
     }
 
     /// <summary>
-    /// Si el username actual es distinto del último que jugó, borra los archivos
-    /// que ClassicUO usa para recordar el último personaje (lastcharacter.json,
-    /// globalprofile.json) y limpia las credenciales del settings.json. Sin
-    /// esto, CUO con -skiploginscreen intenta auto-conectar al personaje de la
-    /// cuenta anterior y queda colgado en "Verifying account".
+    /// Si el username actual es distinto del último que jugó, borra el
+    /// lastcharacter.json para que CUO con -skiploginscreen no intente
+    /// auto-conectar al personaje de la cuenta anterior.
+    ///
+    /// IMPORTANTE: NO tocar settings.json. CUO lo necesita íntegro
+    /// (lastservernum, last_server_name, configs cliente, etc.). Si lo
+    /// borramos, CUO arranca con valores default incompletos y queda
+    /// colgado intentando conectar al server. Las credenciales no se
+    /// guardan en settings.json (saveaccount=false por defecto), se pasan
+    /// por args -username -password en cada lanzamiento, así que no hay
+    /// problema de credenciales viejas.
     /// </summary>
     private static void LimpiarCacheClienteSiCambioCuenta(string cuoExePath, string newUsername)
     {
@@ -132,43 +138,19 @@ internal static class LauncherCore
         }
 
         var cuoDir = Path.GetDirectoryName(cuoExePath)!;
+        var lastCharFile = Path.Combine(cuoDir, "Data", "Profiles", "lastcharacter.json");
 
-        // Archivos de "último personaje" que CUO consulta para auto-loguear
-        var rutasABorrar = new[]
-        {
-            Path.Combine(cuoDir, "Data", "Profiles", "lastcharacter.json"),
-            Path.Combine(cuoDir, "Data", "Profiles", "globalprofile.json"),
-        };
-        foreach (var ruta in rutasABorrar)
-        {
-            try
-            {
-                if (File.Exists(ruta))
-                {
-                    File.Delete(ruta);
-                    BritanniaReborn.App.Log($"Borrado: {ruta} (cambio de cuenta {oldUsername} → {newUsername})");
-                }
-            }
-            catch (Exception ex)
-            {
-                BritanniaReborn.App.Log($"No pude borrar {ruta}: {ex.Message}");
-            }
-        }
-
-        // Limpiar credenciales y last character del settings.json (si existe).
-        // CUO lo recrea con los args -username -password al arrancar.
-        var settingsFile = Path.Combine(cuoDir, "settings.json");
         try
         {
-            if (File.Exists(settingsFile))
+            if (File.Exists(lastCharFile))
             {
-                File.Delete(settingsFile);
-                BritanniaReborn.App.Log($"Borrado: {settingsFile} (cambio de cuenta)");
+                File.Delete(lastCharFile);
+                BritanniaReborn.App.Log($"Borrado: {lastCharFile} (cambio de cuenta {oldUsername} → {newUsername})");
             }
         }
         catch (Exception ex)
         {
-            BritanniaReborn.App.Log($"No pude borrar settings.json: {ex.Message}");
+            BritanniaReborn.App.Log($"No pude borrar {lastCharFile}: {ex.Message}");
         }
     }
 
