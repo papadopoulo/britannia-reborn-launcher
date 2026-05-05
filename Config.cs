@@ -46,8 +46,12 @@ internal static class Config
     public const string EventosUrl = PatcherBaseUrl + "/eventos.json";
 
     // Polling para indicador "servidor online/offline" en pantalla login.
-    // 3 segundos da feedback rápido tras restart sin saturar al server.
-    public const int StatusCheckIntervalMs = 3000;
+    // 30 segundos: cualquier valor < 10s acumula intentos en el IPRateLimiter
+    // del server (cada conexión TCP cuenta como attempt; con timeWindow=10s
+    // el contador no se reseta y a los ~30 polls te baneas a ti mismo durante
+    // hasta 10 minutos por backoff exponencial). 30s > timeWindow → cada poll
+    // resetea contador a 1, nunca acumula. Aprendido por las malas el 2026-05-05.
+    public const int StatusCheckIntervalMs = 30000;
     public const int StatusCheckTimeoutMs = 1500;
 
     // Subcarpeta local donde el launcher mantiene los .mul parcheables.

@@ -8,6 +8,7 @@ public partial class MainWindow : Window
 {
     private readonly string _uoPath;
     private readonly ServerStatusChecker _statusChecker;
+    private string _loadedUsername = "";
 
     public MainWindow(string uoPath)
     {
@@ -22,11 +23,25 @@ public partial class MainWindow : Window
         // Cargar settings persistidos
         var settings = LauncherSettings.Load();
         TxtUsername.Text = settings.LastUsername;
+        _loadedUsername = settings.LastUsername ?? "";
         if (settings.SavePassword && !string.IsNullOrEmpty(settings.SavedPassword))
         {
             TxtPassword.Password = settings.SavedPassword;
             ChkSavePassword.IsChecked = true;
         }
+
+        // Si el usuario cambia el username escrito, limpiamos el password guardado.
+        // Sin esto, el password del último login (p.ej. Lilith) se mandaría al server
+        // junto con el nuevo username (p.ej. Test) → BadPass silencioso → cuo se queda
+        // colgado en "Verifying account" porque -skiploginscreen no muestra el error.
+        TxtUsername.TextChanged += (_, _) =>
+        {
+            var current = TxtUsername.Text?.Trim() ?? "";
+            if (!string.Equals(current, _loadedUsername, System.StringComparison.OrdinalIgnoreCase))
+            {
+                TxtPassword.Password = "";
+            }
+        };
 
         // Status del servidor (polling TCP cada 3s al puerto del shard)
         _statusChecker = new ServerStatusChecker(
@@ -129,7 +144,14 @@ public partial class MainWindow : Window
 
         // Ocultar el login mientras juega. Cuando ClassicUO termine, abrimos el
         // banner (PatcherWindow modo post-game) — al darle JUGAR vuelve al login.
+        // CRITICAL: parar el status checker antes de jugar — sigue polleando aunque
+        // la ventana esté oculta y cada poll TCP cuenta en el IPRateLimiter del
+        // server. En partidas largas se acumulan attempts y el server termina
+        // baneando la IP del propio jugador silenciosamente. Cuando vuelva el banner
+        // y luego la pantalla login, se crea un MainWindow nuevo con su propio
+        // checker fresh (count = 1), así no se hereda estado.
         Hide();
+        try { _statusChecker.Dispose(); } catch { }
         if (proc != null)
         {
             try
