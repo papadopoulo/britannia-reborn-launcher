@@ -108,18 +108,41 @@ internal static class LauncherCore
 
             // UseShellExecute=false + CreateNoWindow=true:
             // - No se ve la consola de cuo (es console app)
-            // - La ventana del juego SI se abre normal (no se ve afectada)
-            // - Sin redirect: el proceso es independiente, sigue corriendo
-            //   aunque cerremos el launcher
+            // - La ventana del juego SÍ se abre normal
+            //
+            // Capturamos stdout/stderr al launcher.log para diagnosticar bugs
+            // del cliente (carga, crashes, packets). Cada línea de cuo aparece
+            // como "[cuo] <texto>" en %APPDATA%\BritanniaReborn\launcher.log.
             var psi = new ProcessStartInfo
             {
                 FileName = cuoExe,
                 WorkingDirectory = Path.GetDirectoryName(cuoExe)!,
                 UseShellExecute = false,
-                CreateNoWindow = true
+                CreateNoWindow = true,
+                RedirectStandardOutput = true,
+                RedirectStandardError = true,
             };
             foreach (var a in args) psi.ArgumentList.Add(a);
             var proc = Process.Start(psi);
+            if (proc != null)
+            {
+                proc.OutputDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        BritanniaReborn.App.Log($"[cuo] {e.Data}");
+                    }
+                };
+                proc.ErrorDataReceived += (_, e) =>
+                {
+                    if (!string.IsNullOrEmpty(e.Data))
+                    {
+                        BritanniaReborn.App.Log($"[cuo!] {e.Data}");
+                    }
+                };
+                proc.BeginOutputReadLine();
+                proc.BeginErrorReadLine();
+            }
             return (true, "", proc);
         }
         catch (Exception ex)
