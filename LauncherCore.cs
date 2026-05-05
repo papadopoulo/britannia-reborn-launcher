@@ -214,16 +214,37 @@ internal static class LauncherCore
             changed = true;
         }
 
-        // Vaciar plugins. CUO trae por defecto "./Assistant/Razor.dll" pero
-        // ese DLL NO está incluido en el zip de distribución del launcher.
-        // Resultado: CUO intenta cargar el plugin, falla, y se queda colgado
-        // en "Logging into shard" o "Verifying account". Confirmado en logs:
-        // conexiones espurias cada 3s (Razor intentando conectar paralelo).
+        // Plugins: solo quitar entries cuyo DLL NO existe en disco. Si quitamos
+        // TODOS, el cliente se queda en estado raro y no envía packets. Si
+        // dejamos uno que no existe, también se rompe. Filtro inteligente.
         var pluginsNode = obj["plugins"];
         if (pluginsNode is JsonArray plugins && plugins.Count > 0)
         {
-            obj["plugins"] = new JsonArray();
-            changed = true;
+            var cuoDir = Path.GetDirectoryName(cuoExePath)!;
+            var pluginsValidos = new JsonArray();
+            foreach (var p in plugins)
+            {
+                var rel = p?.GetValue<string>();
+                if (string.IsNullOrEmpty(rel))
+                {
+                    continue;
+                }
+                var abs = Path.Combine(cuoDir, rel.TrimStart('.', '/', '\\').Replace('/', Path.DirectorySeparatorChar));
+                if (File.Exists(abs))
+                {
+                    pluginsValidos.Add(rel);
+                }
+                else
+                {
+                    BritanniaReborn.App.Log($"Plugin no existe, lo quito de settings: {rel}");
+                }
+            }
+            // Si la lista cambió (algún plugin se filtró), actualizar
+            if (pluginsValidos.Count != plugins.Count)
+            {
+                obj["plugins"] = pluginsValidos;
+                changed = true;
+            }
         }
 
         if (changed)
