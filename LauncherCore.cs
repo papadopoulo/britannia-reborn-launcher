@@ -214,10 +214,22 @@ internal static class LauncherCore
             changed = true;
         }
 
+        // Vaciar plugins. CUO trae por defecto "./Assistant/Razor.dll" pero
+        // ese DLL NO está incluido en el zip de distribución del launcher.
+        // Resultado: CUO intenta cargar el plugin, falla, y se queda colgado
+        // en "Logging into shard" o "Verifying account". Confirmado en logs:
+        // conexiones espurias cada 3s (Razor intentando conectar paralelo).
+        var pluginsNode = obj["plugins"];
+        if (pluginsNode is JsonArray plugins && plugins.Count > 0)
+        {
+            obj["plugins"] = new JsonArray();
+            changed = true;
+        }
+
         if (changed)
         {
             File.WriteAllText(settingsFile, obj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
-            BritanniaReborn.App.Log($"Reparado settings.json: last_server_name={Config.ServerName}, lastservernum={Config.LastServerNum}");
+            BritanniaReborn.App.Log($"Reparado settings.json: last_server_name={Config.ServerName}, lastservernum={Config.LastServerNum}, plugins=[]");
         }
     }
 
