@@ -102,15 +102,20 @@ public partial class MainWindow : Window
             return;
         }
 
-        // Persistir settings antes de lanzar
+        // IMPORTANTE: Lanzar PRIMERO, persistir DESPUÉS.
+        // LauncherCore.LanzarJuego compara el username actual con el LastUsername
+        // del settings para detectar cambio de cuenta y limpiar caché del cliente
+        // (lastcharacter.json). Si guardáramos antes, mi código vería el valor
+        // recién guardado y nunca detectaría el cambio.
+        var (ok, errorOut, proc) = LauncherCore.LanzarJuego(user, pass, _uoPath);
+
+        // Una vez lanzado OK (o aunque falle, persistir igualmente las preferencias)
         var settings = LauncherSettings.Load();
         settings.LastUsername = user;
         settings.SavePassword = ChkSavePassword.IsChecked == true;
         settings.SavedPassword = settings.SavePassword ? pass : "";
         settings.UoPath = _uoPath;
         LauncherSettings.Save(settings);
-
-        var (ok, errorOut, proc) = LauncherCore.LanzarJuego(user, pass, _uoPath);
         if (!ok)
         {
             // Mostrar error completo en MessageBox (con scroll para textos largos)
