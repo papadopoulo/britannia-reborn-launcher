@@ -9,6 +9,13 @@ internal static class Config
     public const int ServerPort = 2593;
     public const int ShardType = 2;
 
+    // Nombre y número del shard tal como ModernUO los anuncia al cliente.
+    // El launcher repara el settings.json de CUO con estos valores si están
+    // vacíos (CUO regenerado a veces los pierde y queda colgado en
+    // "Logging into shard").
+    public const string ServerName = "DigitalNest";
+    public const int LastServerNum = 1;
+
     // Versión de UO recomendada para que el cliente reporte
     public const string ClientVersion = "7.0.114.40";
 

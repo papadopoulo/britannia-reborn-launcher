@@ -2,6 +2,8 @@ using System;
 using System.Diagnostics;
 using System.IO;
 using System.Linq;
+using System.Text.Json;
+using System.Text.Json.Nodes;
 
 namespace BritanniaReborn;
 
@@ -63,6 +65,18 @@ internal static class LauncherCore
         catch (Exception ex)
         {
             BritanniaReborn.App.Log($"No pude limpiar caché del cliente: {ex.Message}");
+        }
+
+        // Reparar settings.json si tiene last_server_name vacío. Bug observado:
+        // CUO regenerado deja last_server_name="" y queda colgado en "Logging
+        // into shard" al conectar al game server.
+        try
+        {
+            RepararSettingsCliente(cuoExe);
+        }
+        catch (Exception ex)
+        {
+            BritanniaReborn.App.Log($"No pude reparar settings.json del cliente: {ex.Message}");
         }
 
         // -skiploginscreen SIEMPRE: las credenciales ya las metió el player
@@ -151,6 +165,59 @@ internal static class LauncherCore
         catch (Exception ex)
         {
             BritanniaReborn.App.Log($"No pude borrar {lastCharFile}: {ex.Message}");
+        }
+    }
+
+    /// <summary>
+    /// Asegura que settings.json del cliente tiene last_server_name y lastservernum
+    /// correctos. CUO al regenerar el archivo a veces los deja vacíos y entonces
+    /// no sabe a qué shard conectar (queda colgado en "Logging into shard").
+    /// </summary>
+    private static void RepararSettingsCliente(string cuoExePath)
+    {
+        var settingsFile = Path.Combine(Path.GetDirectoryName(cuoExePath)!, "settings.json");
+        if (!File.Exists(settingsFile))
+        {
+            return; // CUO lo creará al arrancar; cuando volvamos a lanzar lo reparamos
+        }
+
+        var json = File.ReadAllText(settingsFile);
+        JsonNode? node;
+        try
+        {
+            node = JsonNode.Parse(json);
+        }
+        catch
+        {
+            return; // JSON corrupto, no tocar
+        }
+        if (node is not JsonObject obj)
+        {
+            return;
+        }
+
+        var changed = false;
+
+        var serverNameNode = obj["last_server_name"];
+        var serverName = serverNameNode?.GetValue<string>() ?? "";
+        if (string.IsNullOrEmpty(serverName))
+        {
+            obj["last_server_name"] = Config.ServerName;
+            changed = true;
+        }
+
+        var serverNumNode = obj["lastservernum"];
+        var serverNum = serverNumNode?.GetValue<int>() ?? 0;
+        if (serverNum <= 0)
+        {
+            obj["lastservernum"] = Config.LastServerNum;
+            changed = true;
+        }
+
+        if (changed)
+        {
+            File.WriteAllText(settingsFile, obj.ToJsonString(new JsonSerializerOptions { WriteIndented = true }));
+            BritanniaReborn.App.Log($"Reparado settings.json: last_server_name={Config.ServerName}, lastservernum={Config.LastServerNum}");
         }
     }
 
