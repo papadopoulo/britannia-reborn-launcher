@@ -83,7 +83,7 @@
                     <ControlTemplate TargetType="Button">
                         <Border x:Name="PlayBox" Background="#4A2A6A"
                                 BorderBrush="{StaticResource ColorOro}" BorderThickness="2"
-                                CornerRadius="6" Padding="12,4">
+                                CornerRadius="6" Padding="12,2,12,6">
                             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"/>
                         </Border>
                         <ControlTemplate.Triggers>
@@ -187,6 +187,7 @@
 
                     <Button Grid.Row="5" Name="BtnPlay" Style="{StaticResource PlayButton}"
                             HorizontalAlignment="Right" Width="56" Height="36"
+                            IsDefault="True"
                             Content="▶" Click="BtnPlay_Click"/>
                 </Grid>
             </Grid>
