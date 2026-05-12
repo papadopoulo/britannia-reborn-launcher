@@ -27,18 +27,23 @@ PATCH_DIR="${UO_PATCH_DIR:-/srv/uo-mul}"
 
 # Archivos a publicar (los que el shard modifica)
 # NOTA: el mapa Felucca va en map0LegacyMUL.uop (formato cliente moderno),
-# no map0.mul. statics y staidx siguen siendo .mul.
+# no map0.mul. statics y staidx siguen siendo .mul. Gumps también .mul
+# (legacy) porque UOFiddler los edita en ese formato y el cliente los
+# carga prioritariamente si gumpartLegacyMUL.uop está renombrado a .bak.
 FILES=(
     "map0LegacyMUL.uop"
     "staidx0.mul"
     "statics0.mul"
+    "gumpart.mul"
+    "gumpidx.mul"
+    "gump.def"
 )
 # ===================================================
 
 mkdir -p "$PATCH_DIR/files"
 
 VERSION=$(date -u +%Y%m%d-%H%M%S)
-echo "Publicando mapa version $VERSION..."
+echo "Publicando assets cliente (mapa + gumps) version $VERSION..."
 
 # Copiar archivos a (1) carpeta del patcher cliente y (2) carpeta del server
 for f in "${FILES[@]}"; do
@@ -82,7 +87,7 @@ TMP_MANIFEST="$PATCH_DIR/manifest.json.tmp"
 
 mv -f "$TMP_MANIFEST" "$PATCH_DIR/manifest.json"
 echo "Manifest publicado en $PATCH_DIR/manifest.json"
-echo "Mapa publicado OK (version $VERSION)."
+echo "Assets cliente publicados OK (version $VERSION)."
 echo ""
 echo "RECORDATORIO: para que el SERVER aplique los cambios (no solo el cliente),"
 echo "  reinicia ModernUO cuando convenga: 'systemctl restart modernuo' o desde el panel."
