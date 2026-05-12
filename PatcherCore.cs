@@ -43,8 +43,58 @@ internal static class PatcherCore
 {
     private static readonly HttpClient _http = new() { Timeout = TimeSpan.FromMinutes(5) };
 
+    // UOPs que sombrean los .mul/.idx que distribuimos por el patcher.
+    // ClassicUO prioriza UOP sobre MUL si ambos existen, así que renombramos
+    // estos a .bak en cada arranque para que se cargue nuestro .mul patcheado
+    // con los gumps/art custom.
+    //
+    // NO se incluye map0LegacyMUL.uop (lo usamos directamente como mapa).
+    // NO se incluyen AnimationFrame*.uop ni AnimationSequence.uop (las anims
+    // legacy .mul conviven con esas .uop, no se sombrean).
+    private static readonly string[] _uopShadowsToBackup =
+    {
+        "gumpartLegacyMUL.uop",
+        "artLegacyMUL.uop"
+    };
+
     public static string GetDataPath() =>
         Path.Combine(AppContext.BaseDirectory, Config.DataSubfolder);
+
+    /// <summary>
+    /// Renombra los UOPs que sombrean a nuestros .mul patcheados (gumpart,
+    /// art). Si la .bak ya existe, simplemente borra el .uop nuevo (no
+    /// machacamos un .bak previo válido).
+    /// </summary>
+    private static void RenombrarUopsShadowing(string dataDir)
+    {
+        foreach (var uopName in _uopShadowsToBackup)
+        {
+            var src = Path.Combine(dataDir, uopName);
+            if (!File.Exists(src))
+            {
+                continue;
+            }
+            var bak = src + ".bak";
+            try
+            {
+                if (File.Exists(bak))
+                {
+                    // Ya tenemos backup → solo eliminamos el .uop para que el .mul tome precedencia.
+                    File.Delete(src);
+                    BritanniaReborn.App.Log($"Patcher: borrado {uopName} (ya existe {uopName}.bak)");
+                }
+                else
+                {
+                    File.Move(src, bak);
+                    BritanniaReborn.App.Log($"Patcher: renombrado {uopName} → {uopName}.bak (cede precedencia al .mul patcheado)");
+                }
+            }
+            catch (Exception ex)
+            {
+                BritanniaReborn.App.Log($"Patcher: no pude procesar {uopName}: {ex.Message}");
+            }
+        }
+    }
 
     /// <summary>True si el primer setup (copia desde UO oficial) ya está hecho.
     /// Verifica anim.mul + map0 + client.exe (necesario para ClassicUO detectar versión).</summary>
@@ -99,6 +149,12 @@ internal static class PatcherCore
         prog.BytesDescargados = totalBytes;
         prog.Mensaje = "UO oficial copiado a uodata/";
         progress.Report(prog);
+
+        // Tras la copia inicial: renombramos los UOPs que sombrean los .mul
+        // patcheados (gumpartLegacyMUL.uop, artLegacyMUL.uop). Sin esto los
+        // gumps custom del chat y los iconos custom de items no se ven —
+        // ClassicUO carga del .uop vanilla en lugar del .mul actualizado.
+        RenombrarUopsShadowing(dst);
     }
 
     /// <summary>Descarga manifest, compara con local, descarga los que difieren.</summary>
@@ -106,6 +162,12 @@ internal static class PatcherCore
     {
         var dataDir = GetDataPath();
         Directory.CreateDirectory(dataDir);
+
+        // Defensivo en cada parcheo: si por algún motivo el .uop sombreante
+        // ha aparecido o reaparecido (reinstalación, restauración manual,
+        // setup nuevo que se saltó la copia inicial...), lo dejamos como .bak
+        // antes de continuar.
+        RenombrarUopsShadowing(dataDir);
 
         progress.Report(new PatcherProgress { Mensaje = "Descargando manifest del servidor..." });
         Manifest? manifest;
