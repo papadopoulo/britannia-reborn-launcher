@@ -31,12 +31,36 @@ PATCH_DIR="${UO_PATCH_DIR:-/srv/uo-mul}"
 # (legacy) porque UOFiddler los edita en ese formato y el cliente los
 # carga prioritariamente si gumpartLegacyMUL.uop está renombrado a .bak.
 FILES=(
+    # Mapa + statics
     "map0LegacyMUL.uop"
     "staidx0.mul"
     "statics0.mul"
+    # Gumps custom (chat HUD, organizadores, etc.)
     "gumpart.mul"
     "gumpidx.mul"
     "gump.def"
+    # Art (items, iconos de inventario)
+    "art.mul"
+    "artidx.mul"
+    "tiledata.mul"
+    # Animaciones (monturas custom: Kirín, Jabalí, Wyrm, etc.)
+    "anim.mul"
+    "anim.idx"
+    "anim2.mul"
+    "anim2.idx"
+    "anim3.mul"
+    "anim3.idx"
+    "anim4.mul"
+    "anim4.idx"
+    "anim5.mul"
+    "anim5.idx"
+    "animdata.mul"
+    "bodyconv.def"
+    "body.def"
+    "mobtypes.txt"
+    # Multi-tiles (casas, barcos, addons)
+    "multi.mul"
+    "multi.idx"
 )
 # ===================================================
 
