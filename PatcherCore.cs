@@ -54,7 +54,8 @@ internal static class PatcherCore
     private static readonly string[] _uopShadowsToBackup =
     {
         "gumpartLegacyMUL.uop",
-        "artLegacyMUL.uop"
+        "artLegacyMUL.uop",
+        "MultiCollection.uop"
     };
 
     public static string GetDataPath() =>
